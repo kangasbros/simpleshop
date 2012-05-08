@@ -1,6 +1,6 @@
 from django.shortcuts import render_to_response
-from shop.models import Product
+from simpleshop.models import Product
 
 def index(request):
     product_list = Product.objects.all().order_by('price')
-    return render_to_response('simpleshop/index.html', {'product_list': product_list})
+    return render_to_response('index.html', {'product_list': product_list})
