@@ -19,8 +19,11 @@ class Product(models.Model):
         
 class Purchase(models.Model):
 	created_at = models.DateTimeField(blank=True, default=datetime.datetime.now)
+	paid_at = models.DateTimeField(null=True, blank=True, default=None)
+	shipped_at = models.DateTimeField(nullö=True, blank=True, default=None)
 
-    bitcoin_address = models.ForeignKey("BitcoinAddress")
+    bitcoin_address = models.OneToOneField("BitcoinAddress")
+
     # Not sure how this many-to-many thing will work.
     products = models.ManyToManyField("Product", through='ProductPurchase')
     address = models.TextField(blank=True)
