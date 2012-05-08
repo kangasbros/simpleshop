@@ -1,4 +1,7 @@
 simpleshop
 ==========
+A very simple Bitcoin shop solution.
 
-a very simple bitcoin shop sollution
+Software
+--------
+simpleshop runs on Django 1.4.
