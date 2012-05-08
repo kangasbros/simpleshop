@@ -19,7 +19,7 @@ class Product(models.Model):
         return self.name
         
 class Purchase(models.Model):
-    created_at = models.DateTimeField(blank=True, default=datetime.datetime.now)
+    created_at = models.DateTimeField(blank=True, auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True, default=None)
     shipped_at = models.DateTimeField(null=True, blank=True, default=None)
 
