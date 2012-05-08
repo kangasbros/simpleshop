@@ -3,7 +3,6 @@ from django.db import models
 
 class BitcoinAddress(models.Model):
     address = models.CharField(max_length=36)
-    used = models.BooleanField(default=False)
     
     def __unicode__(self):
         return self.address
