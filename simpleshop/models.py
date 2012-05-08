@@ -1,6 +1,7 @@
-from django.db import models
 import json
 import urllib
+import datetime
+from django.db import models
 from django.conf import settings
 from decimal import Decimal
 from currency import btc2currency
@@ -48,9 +49,9 @@ class BitcoinAddress(models.Model):
 
     def received(self):
         url="http://blockchain.info/q/addressbalance/"+self.address+"?confirmations=2"
-        f = urllib.urlopen(API_URL + url_suffix, data)
+        f = urllib.urlopen(url, None)
         data = f.read()
-        r=Decimal(data)
+        r=Decimal(data)*Decimal("0.00000001")
         if r>self.received_least:
             self.received_least=r
             self.save()
