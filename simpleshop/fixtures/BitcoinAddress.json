@@ -1,0 +1,1 @@
+[{"pk": 1, "model": "simpleshop.bitcoinaddress", "fields": {"received_least": "0", "used": true, "address": "1DiRtm4j9hBf6BLoCLBsh9Y14GWuUjRXj5"}}, {"pk": 2, "model": "simpleshop.bitcoinaddress", "fields": {"received_least": "0", "used": true, "address": "1B8UFu74QjoPYmSwFVWQUw9gRX7JbJbYLX"}}]
