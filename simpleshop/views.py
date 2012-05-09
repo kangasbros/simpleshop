@@ -33,6 +33,7 @@ def index(request):
             return render_to_response('payment.html', {
                 'shop_name': SHOP_NAME,
                 'shop_email': SHOP_FROM_EMAIL,
+                'cost': purchase.bitcoin_payment,
                 'bitcoin_address': bitcoinaddress,
                 'email_address': request.POST.get('email'),
             })
