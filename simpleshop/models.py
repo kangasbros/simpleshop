@@ -79,26 +79,27 @@ class BitcoinAddress(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=200)
     image_url = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=8, decimal_places=2)
+    price = models.DecimalField(max_digits=8, decimal_places=2, default=None)
     description = models.TextField()
+    stock = models.PositiveIntegerField()
     
     def __unicode__(self):
         return self.name
         
 class Purchase(models.Model):
     created_at = models.DateTimeField(blank=True, auto_now_add=True)
-    paid_at = models.DateTimeField(null=True, blank=True, default=None)
-    shipped_at = models.DateTimeField(null=True, blank=True, default=None)
+    paid_at = models.DateTimeField(blank=True, default=None)
+    shipped_at = models.DateTimeField(blank=True, default=None)
     
     bitcoin_address = models.OneToOneField("BitcoinAddress")
-    bitcoin_payment = models.DecimalField(null=True, max_digits=16, decimal_places=8, default=None)
-    price_total = models.DecimalField(null=True, max_digits=8, decimal_places=2, default=None)
+    bitcoin_payment = models.DecimalField(max_digits=16, decimal_places=8, default=None)
+    price_total = models.DecimalField(max_digits=8, decimal_places=2, default=None)
     products = models.ManyToManyField("Product", through='ProductPurchase')
-
+    
     name = models.CharField(max_length=100)
-    address = models.TextField(blank=True)
+    address = models.TextField()
     email = models.EmailField()
-
+    
     def check_payment_status(self):
         if not self.bitcoin_payment:
             raise Exception("total price not calculated")
@@ -152,4 +153,4 @@ class Purchase(models.Model):
 class ProductPurchase(models.Model):
     product = models.ForeignKey(Product)
     purchase = models.ForeignKey(Purchase)
-    count = models.PositiveIntegerField(blank=True, null=True)
+    count = models.PositiveIntegerField()
