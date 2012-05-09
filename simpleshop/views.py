@@ -5,6 +5,13 @@ from simpleshop.forms import PurchaseForm
 from simpleshop import currency
 
 def index(request):
+    # TODO: Add support for multiple products.
+    products = Product.objects.all()
+    if products.count() != 1 or products[0].stock <= 0:
+        return render_to_response('index.html', {
+            'out_of_stock': True,
+        })
+
     # Check if the user has submitted the order form.
     if request.method == 'POST':
         form = PurchaseForm(request.POST)
@@ -31,15 +38,6 @@ def index(request):
                 email=request.POST.get('email'),
                 address=request.POST.get('address'),
                 bitcoin_address=bitcoinaddress)
-                
-            # TODO: Add support for multiple products.
-            products = Product.objects.all()
-            if products.count() != 1:
-                return render_to_response('index.html', {
-                    'form': form,
-                    'error_message': 'An error has occured processing your request. Please try again later.',
-                })
-            product = products[0]
             
             purchase.save()
             
