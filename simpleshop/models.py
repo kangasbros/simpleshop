@@ -70,14 +70,19 @@ class Product(models.Model):
         return self.name
         
 class Purchase(models.Model):
-    created_at = models.DateTimeField(blank=True, default=datetime.datetime.now)
+    created_at = models.DateTimeField(blank=True, auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True, default=None)
     shipped_at = models.DateTimeField(null=True, blank=True, default=None)
     
     bitcoin_address = models.OneToOneField("BitcoinAddress")
     bitcoin_payment = models.DecimalField(null=True, max_digits=16, decimal_places=8, default=None)
     price_total = models.DecimalField(null=True, max_digits=8, decimal_places=2, default=None)
-    
+    products = models.ManyToManyField("Product", through='ProductPurchase')
+
+    name = models.CharField(max_length=100)
+    address = models.TextField(blank=True)
+    email = models.EmailField()
+
     def check_payment_status(self):
         if not self.bitcoin_payment:
             raise Exception("total price not calculated")
@@ -93,14 +98,14 @@ class Purchase(models.Model):
             list_products += "Paid in bitcoins: " + self.bitcoin_payment + " BTC\n\n"
             list_products += "Email: " + self.email + "\n"
             list_products += "Shipping address:\n" + self.address + "\n"
-            send_mail(SHOP_CONFIRMATION_MESSAGE_SUBJECT, SHOP_CONFIRMATION_MESSAGE + list_products, SHOP_FROM_EMAIL, [self.email],\
+            send_mail(SHOP_CONFIRMATION_MESSAGE_SUBJECT, SHOP_CONFIRMATION_MESSAGE + list_products, SHOP_FROM_EMAIL, [self.email],
                 fail_silently=False)
-            send_mail('New order received', list_products, self.email, [SHOP_FROM_EMAIL],\
+            send_mail('New order received', list_products, self.email, [SHOP_FROM_EMAIL],
                 fail_silently=False)
             self.save()
     
     def finalize_order(self):
-        if price_total:
+        if self.price_total:
             raise Exception("should do finalize_order only once")
         total = Decimal(0)
         for pp in ProductPurchase.objects.filter(purchase=self):
@@ -108,10 +113,9 @@ class Purchase(models.Model):
         self.price_total = total
         self.bitcoin_payment = btc2currency(self.price_total, BITCOIN_FIAT_CURRENCY)
         self.save()
-    
-    products = models.ManyToManyField("Product", through='ProductPurchase')
-    address = models.TextField(blank=True)
-    email = models.EmailField()
+        
+        self.bitcoin_address.used = True
+        self.bitcoin_address.save()
 
 class ProductPurchase(models.Model):
     product = models.ForeignKey(Product)
