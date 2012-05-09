@@ -51,7 +51,6 @@ def get_rate_table():
             result=f.read()
             j=json.loads(result)
             cache.set(cache_key, j, 60*60)
-            print result
         except:
             print "Unexpected error:", sys.exc_info()[0]
 
