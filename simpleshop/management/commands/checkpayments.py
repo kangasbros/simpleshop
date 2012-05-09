@@ -1,4 +1,5 @@
 import datetime
+from django.utils import timezone
 from django.core.management.base import BaseCommand, CommandError
 from simpleshop.models import *
 
@@ -13,7 +14,7 @@ class Command(BaseCommand):
         
         # Execute on all unpaid orders older than 14 days
         # TODO: Set to variable prune time
-        orders = Purchase.objects.filter(paid_at=None, created_at__lte=(datetime.datetime.now()-datetime.timedelta(days=14)))
+        orders = Purchase.objects.filter(paid_at=None, created_at__lte=(timezone.now()-datetime.timedelta(days=14)))
         for order in orders:
             order.prune()
 

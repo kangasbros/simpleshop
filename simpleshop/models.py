@@ -1,11 +1,11 @@
 import json
 import urllib
-import datetime
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from django.core.mail import send_mail
 from decimal import Decimal
 from currency import currency2btc
-from django.core.mail import send_mail
 
 BITCOIN_CONFIRMATIONS_REQUIRED = getattr(
     settings, 
@@ -105,7 +105,7 @@ class Purchase(models.Model):
         if self.paid_at:
             return True
         if self.bitcoin_address.received() >= self.bitcoin_payment:
-            self.paid_at = datetime.datetime.now()
+            self.paid_at = timezone.now()
             list_products = "Products\n----------\n"
             for pp in ProductPurchase.objects.filter(purchase=self):
                 list_products += pp.product.name + ", " + str(pp.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(pp.count) + "\n"
