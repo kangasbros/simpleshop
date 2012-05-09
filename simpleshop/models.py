@@ -37,6 +37,22 @@ Your purchase and payment confirmed successfully. We will ship your product(s) A
 Check your purchase information below. If anything is wrong, contact use ASAP!
 """)
 
+SHOP_PRUNED_ORDER_SUBJECT = getattr(
+    settings,
+    "SHOP_PRUNED_SUBJECT",
+    "Your Bitcoin2PirateBox.com order has been deleted.")
+
+SHOP_PRUNED_ORDER_MESSAGE = getattr(
+    settings,
+    "SHOP_PRUNED_ORDER_MESSAGE",
+    """
+We are sending you this email as we regret to inform you that your order has been deleted from our servers.
+
+You did not send payment within the required timeframe, and as such we have removed your order from our database.
+
+If you are still interested in our products, we invite you to visit us again at http://www.Bitcoin2PirateBox.com/
+""")
+
 SHOP_FROM_EMAIL = getattr(
     settings, 
     "SHOP_FROM_EMAIL", 
@@ -103,6 +119,20 @@ class Purchase(models.Model):
             send_mail('New order received', list_products, self.email, [SHOP_FROM_EMAIL],
                 fail_silently=False)
             self.save()
+            return True
+        return False
+    
+    def prune(self):
+        self.bitcoin_address.used = False
+        self.bitcoin_address.save()
+        
+        for pp in ProductPurchase.objects.filter(purchase=self):
+            pp.delete()
+        
+        send_mail(SHOP_PRUNED_ORDER_SUBJECT, SHOP_PRUNED_ORDER_MESSAGE, SHOP_FROM_EMAIL, [self.email],
+            fail_silently=False)
+        
+        self.delete()
     
     def finalize_order(self):
         if self.price_total:
@@ -116,6 +146,8 @@ class Purchase(models.Model):
         
         self.bitcoin_address.used = True
         self.bitcoin_address.save()
+        
+        return True
 
 class ProductPurchase(models.Model):
     product = models.ForeignKey(Product)
