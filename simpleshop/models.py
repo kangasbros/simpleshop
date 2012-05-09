@@ -48,7 +48,7 @@ class BitcoinAddress(models.Model):
     used = models.BooleanField(default=False)
 
     def received(self):
-        url="http://blockchain.info/q/addressbalance/"+self.address+"?confirmations=2"
+        url="http://blockchain.info/q/addressbalance/"+self.address+"?confirmations="+str(BITCOIN_CONFIRMATIONS_REQUIRED)
         f = urllib.urlopen(url, None)
         data = f.read()
         r=Decimal(data)*Decimal("0.00000001")
