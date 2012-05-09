@@ -88,17 +88,17 @@ class Purchase(models.Model):
             raise Exception("total price not calculated")
         if self.paid_at:
             return True
-        if self.bitcoin_address.received() > self.bitcoin_payment:
+        if self.bitcoin_address.received() >= self.bitcoin_payment:
             self.paid_at = datetime.datetime.now()
-            list_products = "\n\nProducts\n----\n"
+            list_products = "Products\n----------\n"
             for pp in ProductPurchase.objects.filter(purchase=self):
-                list_products += pp.product.name+", " + pp.product.price+" " + BITCOIN_FIAT_CURRENCY + " X" + pp.count + "\n"
-            list_products += "\n----\n"
-            list_products += "Total: " + self.price_total+BITCOIN_FIAT_CURRENCY + "\n"
-            list_products += "Paid in bitcoins: " + self.bitcoin_payment + " BTC\n\n"
+                list_products += pp.product.name + ", " + str(pp.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(pp.count) + "\n"
+            list_products += "----------\n"
+            list_products += "Total: " + str(self.price_total) + BITCOIN_FIAT_CURRENCY + "\n"
+            list_products += "Paid in bitcoins: " + str(self.bitcoin_payment) + " BTC\n\n"
             list_products += "Email: " + self.email + "\n"
-            list_products += "Shipping address:\n" + self.address + "\n"
-            send_mail(SHOP_CONFIRMATION_MESSAGE_SUBJECT, SHOP_CONFIRMATION_MESSAGE + list_products, SHOP_FROM_EMAIL, [self.email],
+            list_products += "Shipping address:\n" + self.name + "\n" + self.address + "\n"
+            send_mail(SHOP_CONFIRMATION_MESSAGE_SUBJECT, SHOP_CONFIRMATION_MESSAGE + "\n\n" + list_products, SHOP_FROM_EMAIL, [self.email],
                 fail_silently=False)
             send_mail('New order received', list_products, self.email, [SHOP_FROM_EMAIL],
                 fail_silently=False)
