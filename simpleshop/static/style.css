@@ -8,6 +8,11 @@ textarea {
     display: block;
 }
 
+p.error {
+    color: #ff0000;
+    font-weight: bold;
+}
+
 ul.errorlist {
     margin: 0;
     padding: 0;
