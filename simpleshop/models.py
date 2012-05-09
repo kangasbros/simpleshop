@@ -4,7 +4,7 @@ import datetime
 from django.db import models
 from django.conf import settings
 from decimal import Decimal
-from currency import btc2currency
+from currency import currency2btc
 from django.core.mail import send_mail
 
 BITCOIN_CONFIRMATIONS_REQUIRED = getattr(
@@ -111,7 +111,7 @@ class Purchase(models.Model):
         for pp in ProductPurchase.objects.filter(purchase=self):
             total += pp.count * pp.product.price
         self.price_total = total
-        self.bitcoin_payment = btc2currency(self.price_total, BITCOIN_FIAT_CURRENCY)
+        self.bitcoin_payment = currency2btc(self.price_total, BITCOIN_FIAT_CURRENCY)
         self.save()
         
         self.bitcoin_address.used = True
