@@ -1,0 +1,16 @@
+form p {
+    margin-top: 0;
+}
+
+label,
+input,
+textarea {
+    display: block;
+}
+
+ul.errorlist {
+    margin: 0;
+    padding: 0;
+    color: #ff0000;
+    list-style-type: none;
+}
