@@ -116,4 +116,4 @@ class Purchase(models.Model):
 class ProductPurchase(models.Model):
     product = models.ForeignKey(Product)
     purchase = models.ForeignKey(Purchase)
-    count = models.IntegerField(blank=True, null=True)
+    count = models.PositiveIntegerField(blank=True, null=True)
