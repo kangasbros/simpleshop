@@ -12,7 +12,10 @@ class PurchaseForm(forms.Form):
         data = self.cleaned_data['quantity']
         # TODO: Add support for multiple products.
         products = Product.objects.all()
-        if products.count() == 1 and data > products[0].stock:
-            raise forms.ValidationError("Only " + str(products[0].stock) + " in stock. Please set this number no higher than the current stock.")
+        if products.count() == 1:
+            if products[0].stock <= 0:
+                raise forms.ValidationError("Sorry! We're completely out of stock!")
+            if data > products[0].stock:
+                raise forms.ValidationError("Sorry! We only have " + str(products[0].stock) + " in stock.")
         
         return data

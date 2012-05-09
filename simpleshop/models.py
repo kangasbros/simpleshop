@@ -103,24 +103,34 @@ class Purchase(models.Model):
     def check_payment_status(self):
         if not self.bitcoin_payment:
             raise Exception("total price not calculated")
+        
         if self.paid_at:
             return True
+        
         if self.bitcoin_address.received() >= self.bitcoin_payment:
             self.paid_at = timezone.now()
+            self.save()
+            
             list_products = "Products\n----------\n"
             for pp in ProductPurchase.objects.filter(purchase=self):
                 list_products += pp.product.name + ", " + str(pp.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(pp.count) + "\n"
+                
+                product = pp.product
+                product.stock -= pp.count
+                product.save()
             list_products += "----------\n"
             list_products += "Total: " + str(self.price_total) + BITCOIN_FIAT_CURRENCY + "\n"
             list_products += "Paid in bitcoins: " + str(self.bitcoin_payment) + " BTC\n\n"
             list_products += "Email: " + self.email + "\n"
             list_products += "Shipping address:\n" + self.name + "\n" + self.address + "\n"
+            
             send_mail(SHOP_CONFIRMATION_MESSAGE_SUBJECT, SHOP_CONFIRMATION_MESSAGE + "\n\n" + list_products, SHOP_FROM_EMAIL, [self.email],
                 fail_silently=False)
             send_mail('New order received', list_products, self.email, [SHOP_FROM_EMAIL],
                 fail_silently=False)
-            self.save()
+                
             return True
+        
         return False
     
     def prune(self):
@@ -134,13 +144,17 @@ class Purchase(models.Model):
             fail_silently=False)
         
         self.delete()
+        
+        return True
     
     def finalize_order(self):
         if self.price_total:
             raise Exception("should do finalize_order only once")
+
         total = Decimal(0)
         for pp in ProductPurchase.objects.filter(purchase=self):
             total += pp.count * pp.product.price
+
         self.price_total = total
         self.bitcoin_payment = currency2btc(self.price_total, BITCOIN_FIAT_CURRENCY)
         self.save()
