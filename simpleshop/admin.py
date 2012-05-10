@@ -10,7 +10,12 @@ class ModelAdmin(admin.ModelAdmin):
     
 class OrderProductInline(admin.TabularInline):
     model = OrderProduct
-    extra = 1
+    
+    can_delete = False
+    readonly_fields = ('product', 'count')
+    
+    def has_add_permission(self, request):
+        return False
 
 class OrderAdmin(ModelAdmin):
     actions = ('mark_paid', 'mark_shipped')
@@ -22,6 +27,7 @@ class OrderAdmin(ModelAdmin):
     
     # TODO: Show price, Bitcoin price, and items as static
     # TODO: Show paid, shipped as checkbox
+    readonly_fields = ('total_price', 'bitcoin_payment', 'bitcoin_address')
     fieldsets = [
         ('Buyer Information', {'fields': ['name', 'email']}),
         ('Payment Information', {'fields': ['total_price', 'bitcoin_payment', 'bitcoin_address', 'paid_at']}),
