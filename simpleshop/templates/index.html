@@ -4,7 +4,7 @@
 {% if out_of_stock %}
 <p class='error'>Sorry! We're completely out of stock! Please check back later.</p>
 {% else %}
-{% if error_message %}<p class='error'>{{ error_message }}</p>{% endif %}
+{% if form_error %}<p class='error'>Please fix the highlighted errors and submit the form again.</p>{% endif %}
 <form action="/" method="post">
 {{ form.as_p }}
 <input type="submit" value="Purchase" />
