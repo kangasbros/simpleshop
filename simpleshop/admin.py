@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.utils import timezone
 from simpleshop.models import Order, Product, OrderProduct
 
+admin.site.disable_action('delete_selected')
+
 class ModelAdmin(admin.ModelAdmin):
     actions_on_top = True
     actions_on_bottom = True
@@ -18,8 +20,6 @@ class OrderProductInline(admin.TabularInline):
         return False
 
 class OrderAdmin(ModelAdmin):
-    can_delete = False
-    
     actions = ('mark_paid', 'mark_shipped', 'mark_closed', 'mark_open')
     
     search_fields = ('name', 'email', 'bitcoin_address__address')
@@ -58,6 +58,8 @@ class OrderAdmin(ModelAdmin):
     # TODO: Send email if shipped or paid
 
 class ProductAdmin(ModelAdmin):
+    actions = ['delete_selected']
+    
     list_display = ('__unicode__', 'price', 'stock')
     list_editable = ('price', 'stock')
 
