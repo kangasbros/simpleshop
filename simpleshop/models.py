@@ -92,14 +92,53 @@ class Order(models.Model):
     shipped_at = models.DateTimeField(null=True, blank=True, default=None)
     
     bitcoin_address = models.OneToOneField("BitcoinAddress")
-    bitcoin_payment = models.DecimalField(max_digits=16, decimal_places=8, null=True, blank=True, default=None)
-    price_total = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, default=None)
+    bitcoin_payment = models.DecimalField(max_digits=16, decimal_places=8, null=True, default=None)
+    price_total = models.DecimalField(max_digits=8, decimal_places=2, null=True, default=None)
     products = models.ManyToManyField("Product", through='OrderProduct')
     
     name = models.CharField(max_length=100)
     address = models.TextField()
     email = models.EmailField()
     
+    # Admin functions
+    def was_shipped(self):
+        if self.shipped_at:
+            return True
+        else:
+            return False
+    was_shipped.admin_order_field = 'shipped_at'
+    was_shipped.boolean = True
+    was_shipped.short_description = 'Shipped?'
+    
+    def was_paid(self):
+        if self.paid_at:
+            return True
+        else:
+            return False
+    was_paid.admin_order_field = 'paid_at'
+    was_paid.boolean = True
+    was_paid.short_description = 'Paid?'
+    
+    # Allocate a Bitcoin address, calculate Bitcoin price
+    # TODO: Move Bitcoin address logic from view
+    def finalize_order(self):
+        if self.price_total:
+            raise Exception("should do finalize_order only once")
+        
+        total = Decimal(0)
+        for pp in OrderProduct.objects.filter(order=self):
+            total += pp.count * pp.product.price
+        
+        self.price_total = total
+        self.bitcoin_payment = currency2btc(self.price_total, BITCOIN_FIAT_CURRENCY)
+        self.save()
+        
+        self.bitcoin_address.used = True
+        self.bitcoin_address.save()
+        
+        return True
+    
+    # Check whether payment has been received
     def check_payment_status(self):
         if not self.bitcoin_payment:
             raise Exception("total price not calculated")
@@ -133,6 +172,7 @@ class Order(models.Model):
         
         return False
     
+    # Remove order and related keys
     def prune(self):
         self.bitcoin_address.used = False
         self.bitcoin_address.save()
@@ -147,27 +187,13 @@ class Order(models.Model):
         
         return True
     
-    def finalize_order(self):
-        if self.price_total:
-            raise Exception("should do finalize_order only once")
-
-        total = Decimal(0)
-        for pp in OrderProduct.objects.filter(order=self):
-            total += pp.count * pp.product.price
-
-        self.price_total = total
-        self.bitcoin_payment = currency2btc(self.price_total, BITCOIN_FIAT_CURRENCY)
-        self.save()
-        
-        self.bitcoin_address.used = True
-        self.bitcoin_address.save()
-        
-        return True
-    
     def __unicode__(self):
-        return "Order #" + str(self.pk) + " - " + self.email
+        return "Order #" + str(self.pk)
 
 class OrderProduct(models.Model):
     product = models.ForeignKey(Product)
     order = models.ForeignKey(Order)
     count = models.PositiveIntegerField()
+    
+    def __unicode__(self):
+        return self.product.name + " x " + str(self.count)
