@@ -18,11 +18,14 @@ class OrderProductInline(admin.TabularInline):
         return False
 
 class OrderAdmin(ModelAdmin):
-    actions = ('mark_paid', 'mark_shipped')
+    can_delete = False
+    
+    actions = ('mark_paid', 'mark_shipped', 'mark_closed', 'mark_open')
     
     search_fields = ('name', 'email', 'bitcoin_address__address')
     
-    list_display = ('__unicode__', 'created_at', 'total_price', 'bitcoin_payment', 'was_paid', 'was_shipped')
+    list_display = ('__unicode__', 'created_at', 'total_price', 'bitcoin_payment', 'was_paid', 'was_shipped', 'closed')
+    list_filter = ('created_at', 'closed')
     date_hierarchy = 'created_at'
     
     # TODO: Show paid, shipped as checkbox
@@ -40,6 +43,15 @@ class OrderAdmin(ModelAdmin):
     def mark_shipped(self, request, queryset):
         queryset.filter(shipped_at=None).update(shipped_at=timezone.now())
     mark_shipped.short_description = "Mark selected orders as shipped"
+    def mark_closed(self, request, queryset):
+        queryset.filter(closed=False).update(closed=True)
+    mark_closed.short_description = "Close selected orders"
+    def mark_open(self, request, queryset):
+        queryset.filter(closed=True).update(close=False)
+    mark_open.short_description = "Re-open selected orders"
+    
+    def has_add_permission(self, request):
+        return False
     
     # TODO: Delete order properly
     
