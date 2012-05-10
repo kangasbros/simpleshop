@@ -15,16 +15,16 @@ class OrderProductInline(admin.TabularInline):
     extra = 0
 
 class OrderAdmin(ModelAdmin):
-    actions = ('mark_paid', 'mark_shipped', 'mark_closed', 'mark_open')
+    actions = ['mark_paid', 'mark_shipped', 'mark_closed', 'mark_open']
     
-    search_fields = ('name', 'email', 'bitcoin_address__address')
+    search_fields = ['name', 'email', 'bitcoin_address__address']
     
-    list_display = ('__unicode__', 'created_at', 'total_price', 'bitcoin_payment', 'was_paid', 'was_shipped', 'closed')
-    list_filter = ('created_at', 'closed')
+    list_display = ['__unicode__', 'created_at', 'total_price', 'bitcoin_payment', 'was_paid', 'was_shipped', 'closed']
+    list_filter = ['created_at', 'closed']
     date_hierarchy = 'created_at'
     
     # TODO: Show paid, shipped as checkbox
-    readonly_fields = ('total_price', 'bitcoin_payment', 'bitcoin_address')
+    readonly_fields = ['total_price', 'bitcoin_payment', 'bitcoin_address']
     fieldsets = [
         ('Buyer Information', {'fields': ['name', 'email']}),
         ('Payment Information', {'fields': ['total_price', 'bitcoin_payment', 'bitcoin_address', 'paid_at']}),
@@ -63,8 +63,8 @@ class OrderAdmin(ModelAdmin):
 class ProductAdmin(ModelAdmin):
     actions = ['delete_selected']
     
-    list_display = ('__unicode__', 'price', 'stock')
-    list_editable = ('price', 'stock')
+    list_display = ['__unicode__', 'price', 'stock']
+    list_editable = ['price', 'stock']
 
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Product, ProductAdmin)

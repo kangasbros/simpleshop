@@ -23,9 +23,9 @@ SHOP_NAME = getattr(
     "SHOP_NAME", 
     "Bitcoin2PirateBox.com")
 
-SHOP_CONFIRMATION_MESSAGE_SUBJECT = getattr(
+SHOP_CONFIRMATION_SUBJECT = getattr(
     settings, 
-    "SHOP_CONFIRMATION_MESSAGE_SUBJECT", 
+    "SHOP_CONFIRMATION_SUBJECT", 
     "Your Bitcoin2PirateBox.com purchase and payment has been confirmed!")
 
 SHOP_CONFIRMATION_MESSAGE = getattr(
@@ -38,9 +38,24 @@ Your purchase and payment confirmed successfully. We will ship your product(s) A
 Check your purchase information below. If anything is wrong, contact use ASAP!
 """)
 
+SHOP_REMINDER_SUBJECT = getattr(
+    settings,
+    "SHOP_REMINDER_SUBJECT",
+    "Reminder to pay for your Bitcoin2PirateBox.com order!")
+
+SHOP_REMINDER_MESSAGE = getattr(
+    settings,
+    "SHOP_REMINDER_MESSAGE",
+    """
+We are sending you this email to remind you to pay for your order.
+If the order is not paid for within the next 24 hours, it will be deleted from our servers.
+
+The purchase information is below. If you have any additional questions or concerns, simply reply to this email.
+""")
+
 SHOP_PRUNED_ORDER_SUBJECT = getattr(
     settings,
-    "SHOP_PRUNED_SUBJECT",
+    "SHOP_PRUNED_ORDER_SUBJECT",
     "Your Bitcoin2PirateBox.com order has been deleted.")
 
 SHOP_PRUNED_ORDER_MESSAGE = getattr(
@@ -169,7 +184,25 @@ class Order(models.Model):
     was_shipped.short_description = 'Shipped?'
     
     # MANAGEMENT FUNCTIONS
-    def check_payment(self, manually_verified=True):
+    def send_reminder(self):
+        list_products = "Products\n----------\n"
+        for op in OrderProduct.objects.filter(order=self):
+            list_products += op.product.name + ", " + str(op.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(op.count) + "\n"
+            
+            product = op.product
+            product.stock -= op.count
+            product.save()
+        list_products += "----------\n"
+        list_products += "Total: " + str(self.total_price) + BITCOIN_FIAT_CURRENCY + "\n"
+        list_products += "Price in Bitcoins: " + str(self.bitcoin_payment) + " BTC\n\n"
+        list_products += "Bitcoin Payment Address: " + self.bitcoin_address.address + "\n\n"
+        list_products += "Email: " + self.email + "\n"
+        list_products += "Shipping address:\n" + self.name + "\n" + self.address + "\n"
+        
+        send_mail(SHOP_REMINDER_SUBJECT, SHOP_REMINDER_MESSAGE + "\n\n" + list_products, SHOP_FROM_EMAIL, [self.email],
+            fail_silently=False)
+    
+    def check_payment(self, manually_verified=False):
         if not self.bitcoin_payment:
             raise Exception("Bitcoin price has not been calculated, cannot compare")
         
@@ -193,9 +226,9 @@ class Order(models.Model):
             list_products += "Email: " + self.email + "\n"
             list_products += "Shipping address:\n" + self.name + "\n" + self.address + "\n"
             
-            send_mail(SHOP_CONFIRMATION_MESSAGE_SUBJECT, SHOP_CONFIRMATION_MESSAGE + "\n\n" + list_products, SHOP_FROM_EMAIL, [self.email],
+            send_mail(SHOP_CONFIRMATION_SUBJECT, SHOP_CONFIRMATION_MESSAGE + "\n\n" + list_products, SHOP_FROM_EMAIL, [self.email],
                 fail_silently=False)
-            send_mail('New order received (Order #' + self.pk + ')', list_products, SHOP_FROM_EMAIL, [SHOP_NOTIFICATION_EMAIL],
+            send_mail('New order received (Order #' + str(self.pk) + ')', list_products, SHOP_FROM_EMAIL, [SHOP_NOTIFICATION_EMAIL],
                 fail_silently=False)
             
             return True
