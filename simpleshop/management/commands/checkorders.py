@@ -12,9 +12,9 @@ class Command(BaseCommand):
         for order in orders:
             order.check_payment_status()
         
-        # Execute on all unpaid orders older than 14 days
+        # Execute on all unpaid orders older than a day
         # TODO: Set to variable prune time
-        orders = Order.objects.filter(paid_at=None, created_at__lte=(timezone.now()-datetime.timedelta(days=14)))
+        orders = Order.objects.filter(paid_at=None, created_at__lte=(timezone.now()-datetime.timedelta(days=1)))
         for order in orders:
             order.prune()
 
