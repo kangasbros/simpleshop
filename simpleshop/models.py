@@ -100,7 +100,7 @@ class Order(models.Model):
     address = models.TextField()
     email = models.EmailField()
     
-    closed = models.BooleanField(default=True)
+    closed = models.BooleanField(default=False)
     
     # Admin functions
     def was_paid(self):
