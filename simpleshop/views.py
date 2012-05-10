@@ -18,6 +18,7 @@ def index(request):
         # If the form's valid, process the order.
         if form.is_valid():
             # Find an unused bitcoin address
+            # TODO: Move logic to model
             unused_bc_addresses = BitcoinAddress.objects.filter(used=False)[:100]
             if not unused_bc_addresses:
                 return render_to_response('index.html', {
