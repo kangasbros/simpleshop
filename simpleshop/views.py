@@ -42,6 +42,8 @@ def index(request):
             purchase.save()
             
             # Connect the purchase to the products
+            # TODO: Add support for multiple products.
+            product = products[0]
             pp = ProductPurchase.objects.create(
                 product=product,
                 purchase=purchase,

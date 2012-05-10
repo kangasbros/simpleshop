@@ -87,13 +87,13 @@ class Product(models.Model):
         return self.name
         
 class Purchase(models.Model):
-    created_at = models.DateTimeField(blank=True, auto_now_add=True)
-    paid_at = models.DateTimeField(blank=True, default=None)
-    shipped_at = models.DateTimeField(blank=True, default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True, default=None)
+    shipped_at = models.DateTimeField(null=True, blank=True, default=None)
     
     bitcoin_address = models.OneToOneField("BitcoinAddress")
-    bitcoin_payment = models.DecimalField(max_digits=16, decimal_places=8, default=None)
-    price_total = models.DecimalField(max_digits=8, decimal_places=2, default=None)
+    bitcoin_payment = models.DecimalField(max_digits=16, decimal_places=8, null=True, blank=True, default=None)
+    price_total = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, default=None)
     products = models.ManyToManyField("Product", through='ProductPurchase')
     
     name = models.CharField(max_length=100)
