@@ -55,8 +55,13 @@ If you are still interested in our products, we invite you to visit us again at 
 """)
 
 SHOP_FROM_EMAIL = getattr(
-    settings, 
-    "SHOP_FROM_EMAIL", 
+    settings,
+    "SHOP_FROM_EMAIL",
+    "support@Bitcoin2PirateBox.com")
+
+SHOP_NOTIFICATION_EMAIL = getattr(
+    settings,
+    "SHOP_NOTIFICATION_EMAIL",
     "support@Bitcoin2PirateBox.com")
 
 class BitcoinAddress(models.Model):
@@ -121,7 +126,7 @@ class Order(models.Model):
             if unused_bitcoin_addresses:
                 send_mail('Almost out of Bitcoin addresses!',
                     "There are less than 100 Bitcoin addresses left in the database.\n\nThought'd you wanna know!",
-                    SHOP_FROM_EMAIL, [SHOP_FROM_EMAIL], fail_silently=True)
+                    SHOP_FROM_EMAIL, [SHOP_NOTIFICATION_EMAIL], fail_silently=True)
             
             self.bitcoin_address = unused_bitcoin_addresses[0]
             
@@ -144,7 +149,7 @@ class Order(models.Model):
         # Save to database
         self.save()
     
-    # Admin functions
+    # ADMIN FUNCTIONS
     def was_paid(self):
         if self.paid_at:
             return True
@@ -163,21 +168,21 @@ class Order(models.Model):
     was_shipped.boolean = True
     was_shipped.short_description = 'Shipped?'
     
-    # Check whether payment has been received
-    def check_payment_status(self):
+    # MANAGEMENT FUNCTIONS
+    def check_payment(self, manually_verified=True):
         if not self.bitcoin_payment:
-            raise Exception("total price not calculated")
+            raise Exception("Bitcoin price has not been calculated, cannot compare")
         
         if self.paid_at:
             return True
         
-        if self.bitcoin_address.received() >= self.bitcoin_payment:
+        if manually_verified or (self.bitcoin_address.received() >= self.bitcoin_payment):
             self.paid_at = timezone.now()
             self.save()
             
             list_products = "Products\n----------\n"
             for op in OrderProduct.objects.filter(order=self):
-                list_products += pp.product.name + ", " + str(pp.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(pp.count) + "\n"
+                list_products += op.product.name + ", " + str(op.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(op.count) + "\n"
                 
                 product = op.product
                 product.stock -= op.count
@@ -190,25 +195,21 @@ class Order(models.Model):
             
             send_mail(SHOP_CONFIRMATION_MESSAGE_SUBJECT, SHOP_CONFIRMATION_MESSAGE + "\n\n" + list_products, SHOP_FROM_EMAIL, [self.email],
                 fail_silently=False)
-            send_mail('New order received', list_products, self.email, [SHOP_FROM_EMAIL],
+            send_mail('New order received (Order #' + self.pk + ')', list_products, SHOP_FROM_EMAIL, [SHOP_NOTIFICATION_EMAIL],
                 fail_silently=False)
-                
+            
             return True
         
         return False
     
-    # Remove order and related keys
     def prune(self):
-        self.bitcoin_address.used = False
-        self.bitcoin_address.save()
+        # Mark closed
+        self.closed = True
+        self.save()
         
-        for op in OrderProduct.objects.filter(order=self):
-            op.delete()
-        
+        # Send an email telling the user if it was "pruned" with the management command
         send_mail(SHOP_PRUNED_ORDER_SUBJECT, SHOP_PRUNED_ORDER_MESSAGE, SHOP_FROM_EMAIL, [self.email],
             fail_silently=False)
-        
-        self.delete()
         
         return True
 

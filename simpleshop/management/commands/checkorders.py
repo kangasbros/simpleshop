@@ -4,13 +4,13 @@ from django.core.management.base import BaseCommand, CommandError
 from simpleshop.models import *
 
 class Command(BaseCommand):
-    help = 'Checks if payments have been made, and prunes old orders.'
+    help = 'Checks if payments have been made, and prunes unpaid orders older than a day.'
     
     def handle(self, *args, **options):
         # Check if payment received on all open orders marked unpaid
         orders = Order.objects.filter(closed=False, paid_at=None)
         for order in orders:
-            order.check_payment_status()
+            order.check_payment()
         
         # Prune all unpaid orders older than a day
         # TODO: Set to variable prune time

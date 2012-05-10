@@ -12,12 +12,7 @@ class ModelAdmin(admin.ModelAdmin):
     
 class OrderProductInline(admin.TabularInline):
     model = OrderProduct
-    
-    can_delete = False
-    readonly_fields = ('product', 'count')
-    
-    def has_add_permission(self, request):
-        return False
+    extra = 0
 
 class OrderAdmin(ModelAdmin):
     actions = ('mark_paid', 'mark_shipped', 'mark_closed', 'mark_open')
@@ -38,24 +33,32 @@ class OrderAdmin(ModelAdmin):
     inlines = [OrderProductInline]
     
     def mark_paid(self, request, queryset):
-        queryset.filter(paid_at=None).update(paid_at=timezone.now())
+        # Call the check_payment method from the model, with manually_verified flag set
+        for obj in queryset:
+            obj.check_payment(True)
     mark_paid.short_description = "Mark selected orders as paid for"
+    
     def mark_shipped(self, request, queryset):
+        # Mark orders as shipped
+        # TODO: Send email
         queryset.filter(shipped_at=None).update(shipped_at=timezone.now())
     mark_shipped.short_description = "Mark selected orders as shipped"
+    
     def mark_closed(self, request, queryset):
+        # Close orders which are open
         queryset.filter(closed=False).update(closed=True)
     mark_closed.short_description = "Close selected orders"
+    
     def mark_open(self, request, queryset):
-        queryset.filter(closed=True).update(close=False)
+        # Open orders which are closed
+        queryset.filter(closed=True).update(closed=False)
     mark_open.short_description = "Re-open selected orders"
     
+    # Don't allow admin adding or deleting orders
     def has_add_permission(self, request):
         return False
-    
-    # TODO: Delete order properly
-    
-    # TODO: Send email if shipped or paid
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 class ProductAdmin(ModelAdmin):
     actions = ['delete_selected']
