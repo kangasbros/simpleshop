@@ -86,7 +86,7 @@ class Product(models.Model):
     def __unicode__(self):
         return self.name
         
-class Purchase(models.Model):
+class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True, default=None)
     shipped_at = models.DateTimeField(null=True, blank=True, default=None)
@@ -94,7 +94,7 @@ class Purchase(models.Model):
     bitcoin_address = models.OneToOneField("BitcoinAddress")
     bitcoin_payment = models.DecimalField(max_digits=16, decimal_places=8, null=True, blank=True, default=None)
     price_total = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, default=None)
-    products = models.ManyToManyField("Product", through='ProductPurchase')
+    products = models.ManyToManyField("Product", through='OrderProduct')
     
     name = models.CharField(max_length=100)
     address = models.TextField()
@@ -112,7 +112,7 @@ class Purchase(models.Model):
             self.save()
             
             list_products = "Products\n----------\n"
-            for pp in ProductPurchase.objects.filter(purchase=self):
+            for pp in OrderProduct.objects.filter(order=self):
                 list_products += pp.product.name + ", " + str(pp.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(pp.count) + "\n"
                 
                 product = pp.product
@@ -137,7 +137,7 @@ class Purchase(models.Model):
         self.bitcoin_address.used = False
         self.bitcoin_address.save()
         
-        for pp in ProductPurchase.objects.filter(purchase=self):
+        for pp in OrderProduct.objects.filter(order=self):
             pp.delete()
         
         send_mail(SHOP_PRUNED_ORDER_SUBJECT, SHOP_PRUNED_ORDER_MESSAGE, SHOP_FROM_EMAIL, [self.email],
@@ -152,7 +152,7 @@ class Purchase(models.Model):
             raise Exception("should do finalize_order only once")
 
         total = Decimal(0)
-        for pp in ProductPurchase.objects.filter(purchase=self):
+        for pp in OrderProduct.objects.filter(order=self):
             total += pp.count * pp.product.price
 
         self.price_total = total
@@ -163,8 +163,11 @@ class Purchase(models.Model):
         self.bitcoin_address.save()
         
         return True
+    
+    def __unicode__(self):
+        return "Order #" + str(self.pk) + " - " + self.email
 
-class ProductPurchase(models.Model):
+class OrderProduct(models.Model):
     product = models.ForeignKey(Product)
-    purchase = models.ForeignKey(Purchase)
+    order = models.ForeignKey(Order)
     count = models.PositiveIntegerField()

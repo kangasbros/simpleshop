@@ -1,7 +1,7 @@
 from django import forms
 from simpleshop.models import Product
 
-class PurchaseForm(forms.Form):
+class OrderForm(forms.Form):
     # TODO: Add support for multiple products.
     quantity = forms.IntegerField(min_value=1)
     email = forms.EmailField()

@@ -1,7 +1,7 @@
 from django.shortcuts import render_to_response
 from django.core.mail import send_mail
 from simpleshop.models import *
-from simpleshop.forms import PurchaseForm
+from simpleshop.forms import OrderForm
 from simpleshop import currency
 
 def index(request):
@@ -14,7 +14,7 @@ def index(request):
 
     # Check if the user has submitted the order form.
     if request.method == 'POST':
-        form = PurchaseForm(request.POST)
+        form = OrderForm(request.POST)
         # If the form's valid, process the order.
         if form.is_valid():
             # Find an unused bitcoin address
@@ -33,30 +33,30 @@ def index(request):
             bitcoinaddress = unused_bc_addresses[0]
             
             # Save the information to the database
-            purchase = Purchase(
+            order = Order(
                 name=request.POST.get('name'),
                 email=request.POST.get('email'),
                 address=request.POST.get('address'),
                 bitcoin_address=bitcoinaddress)
             
-            purchase.save()
+            order.save()
             
-            # Connect the purchase to the products
+            # Connect the order to the products
             # TODO: Add support for multiple products.
             product = products[0]
-            pp = ProductPurchase.objects.create(
+            pp = OrderProduct.objects.create(
                 product=product,
-                purchase=purchase,
+                order=order,
                 count=request.POST.get('quantity'))
             
             # Finalize order (get price, mark address used)
-            purchase.finalize_order()
+            order.finalize_order()
             
             # Show them an adress to send money to.
             return render_to_response('payment.html', {
                 'shop_name': SHOP_NAME,
                 'shop_email': SHOP_FROM_EMAIL,
-                'cost': purchase.bitcoin_payment,
+                'cost': order.bitcoin_payment,
                 'bitcoin_address': bitcoinaddress,
                 'email_address': request.POST.get('email'),
             })
@@ -68,6 +68,6 @@ def index(request):
             })
     
     # If we get to this point, the user hasn't submitted the form, so display it.
-    form = PurchaseForm()
+    form = OrderForm()
     return render_to_response('index.html', {'form': form})
     
