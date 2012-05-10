@@ -100,6 +100,8 @@ class Order(models.Model):
     address = models.TextField()
     email = models.EmailField()
     
+    open = models.BooleanField(default=True)
+    
     # Admin functions
     def was_paid(self):
         if self.paid_at:
