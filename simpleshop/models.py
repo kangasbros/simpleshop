@@ -93,7 +93,7 @@ class Order(models.Model):
     
     bitcoin_address = models.OneToOneField("BitcoinAddress")
     bitcoin_payment = models.DecimalField(max_digits=16, decimal_places=8, null=True, default=None)
-    price_total = models.DecimalField(max_digits=8, decimal_places=2, null=True, default=None)
+    total_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, default=None)
     products = models.ManyToManyField("Product", through='OrderProduct')
     
     name = models.CharField(max_length=100)
@@ -101,15 +101,6 @@ class Order(models.Model):
     email = models.EmailField()
     
     # Admin functions
-    def was_shipped(self):
-        if self.shipped_at:
-            return True
-        else:
-            return False
-    was_shipped.admin_order_field = 'shipped_at'
-    was_shipped.boolean = True
-    was_shipped.short_description = 'Shipped?'
-    
     def was_paid(self):
         if self.paid_at:
             return True
@@ -119,18 +110,27 @@ class Order(models.Model):
     was_paid.boolean = True
     was_paid.short_description = 'Paid?'
     
+    def was_shipped(self):
+        if self.shipped_at:
+            return True
+        else:
+            return False
+    was_shipped.admin_order_field = 'shipped_at'
+    was_shipped.boolean = True
+    was_shipped.short_description = 'Shipped?'
+    
     # Allocate a Bitcoin address, calculate Bitcoin price
     # TODO: Move Bitcoin address logic from view
     def finalize_order(self):
-        if self.price_total:
+        if self.total_price:
             raise Exception("should do finalize_order only once")
         
         total = Decimal(0)
         for pp in OrderProduct.objects.filter(order=self):
             total += pp.count * pp.product.price
         
-        self.price_total = total
-        self.bitcoin_payment = currency2btc(self.price_total, BITCOIN_FIAT_CURRENCY)
+        self.total_price = total
+        self.bitcoin_payment = currency2btc(self.total_price, BITCOIN_FIAT_CURRENCY)
         self.save()
         
         self.bitcoin_address.used = True
@@ -158,7 +158,7 @@ class Order(models.Model):
                 product.stock -= pp.count
                 product.save()
             list_products += "----------\n"
-            list_products += "Total: " + str(self.price_total) + BITCOIN_FIAT_CURRENCY + "\n"
+            list_products += "Total: " + str(self.total_price) + BITCOIN_FIAT_CURRENCY + "\n"
             list_products += "Paid in bitcoins: " + str(self.bitcoin_payment) + " BTC\n\n"
             list_products += "Email: " + self.email + "\n"
             list_products += "Shipping address:\n" + self.name + "\n" + self.address + "\n"
