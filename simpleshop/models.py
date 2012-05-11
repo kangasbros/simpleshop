@@ -4,7 +4,6 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.core.mail import send_mail
-from django.core import exceptions
 from decimal import Decimal
 from currency import currency2btc
 
@@ -111,6 +110,7 @@ class Product(models.Model):
 
 class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
+    reminder_sent_at = models.DateTimeField(null=True, blank=True, default=None)
     paid_at = models.DateTimeField(null=True, blank=True, default=None)
     shipped_at = models.DateTimeField(null=True, blank=True, default=None)
     
@@ -136,7 +136,7 @@ class Order(models.Model):
             # Allocate an unused Bitcoin address
             unused_bitcoin_addresses = BitcoinAddress.objects.filter(used=False)
             if not unused_bitcoin_addresses:
-                raise ObjectDoesNotExist("Cannot allocate an unused Bitcoin address")
+                raise Exception("Cannot allocate an unused Bitcoin address")
             
             if unused_bitcoin_addresses:
                 send_mail('Almost out of Bitcoin addresses!',
@@ -165,6 +165,15 @@ class Order(models.Model):
         self.save()
     
     # ADMIN FUNCTIONS
+    def was_reminded(self):
+        if self.reminder_sent_at:
+            return True
+        else:
+            return False
+    was_reminded.admin_order_field = 'reminder_sent_at'
+    was_reminded.boolean = True
+    was_reminded.short_description = 'Reminded'
+    
     def was_paid(self):
         if self.paid_at:
             return True
@@ -172,7 +181,7 @@ class Order(models.Model):
             return False
     was_paid.admin_order_field = 'paid_at'
     was_paid.boolean = True
-    was_paid.short_description = 'Paid?'
+    was_paid.short_description = 'Paid'
     
     def was_shipped(self):
         if self.shipped_at:
@@ -181,10 +190,13 @@ class Order(models.Model):
             return False
     was_shipped.admin_order_field = 'shipped_at'
     was_shipped.boolean = True
-    was_shipped.short_description = 'Shipped?'
+    was_shipped.short_description = 'Shipped'
     
     # MANAGEMENT FUNCTIONS
     def send_reminder(self):
+        if self.reminder_sent_at:
+            return False
+        
         list_products = "Products\n----------\n"
         for op in OrderProduct.objects.filter(order=self):
             list_products += op.product.name + ", " + str(op.product.price) + " " + BITCOIN_FIAT_CURRENCY + " x " + str(op.count) + "\n"
@@ -201,6 +213,9 @@ class Order(models.Model):
         
         send_mail(SHOP_REMINDER_SUBJECT, SHOP_REMINDER_MESSAGE + "\n\n" + list_products, SHOP_FROM_EMAIL, [self.email],
             fail_silently=False)
+        
+        self.reminder_sent_at = timezone.now()
+        self.save()
     
     def check_payment(self, manually_verified=False):
         if not self.bitcoin_payment:
@@ -243,8 +258,6 @@ class Order(models.Model):
         # Send an email telling the user if it was "pruned" with the management command
         send_mail(SHOP_PRUNED_ORDER_SUBJECT, SHOP_PRUNED_ORDER_MESSAGE, SHOP_FROM_EMAIL, [self.email],
             fail_silently=False)
-        
-        return True
 
 class OrderProduct(models.Model):
     product = models.ForeignKey(Product)

@@ -19,7 +19,7 @@ class OrderAdmin(ModelAdmin):
     
     search_fields = ['name', 'email', 'bitcoin_address__address']
     
-    list_display = ['__unicode__', 'created_at', 'total_price', 'bitcoin_payment', 'was_paid', 'was_shipped', 'closed']
+    list_display = ['__unicode__', 'created_at', 'total_price', 'bitcoin_payment', 'was_reminded', 'was_paid', 'was_shipped', 'closed']
     list_filter = ['created_at', 'closed']
     date_hierarchy = 'created_at'
     

@@ -15,7 +15,7 @@ class Command(BaseCommand):
         # TODO: Setup variable prune / reminder time
 
         # Send a reminder to users with an order older than 1 day
-        orders = Order.objects.filter(closed=False, paid_at=None, created_at__lte=(timezone.now()-datetime.timedelta(days=1)))
+        orders = Order.objects.filter(closed=False, paid_at=None, reminder_sent_at=None, created_at__lte=(timezone.now()-datetime.timedelta(days=1)))
         for order in orders:
             order.send_reminder()
         
